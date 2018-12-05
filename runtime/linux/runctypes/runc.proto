@@ -35,6 +35,7 @@ message CheckpointOptions {
 	bool file_locks = 5;
 	repeated string empty_namespaces = 6;
 	string cgroups_mode = 7;
+	bool TrackMem = 8;
 }
 
 message ProcessDetails {

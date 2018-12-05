@@ -42,6 +42,8 @@ message CheckpointOptions {
 	repeated string empty_namespaces = 6;
 	// set the cgroups mode, soft, full, strict
 	string cgroups_mode = 7;
+	// for tracking memory change
+	bool track_mem = 8;
 }
 
 message ProcessDetails {
