@@ -23,6 +23,7 @@ import (
 	"github.com/containerd/containerd/cmd/ctr/commands"
 	"github.com/containerd/containerd/runtime/linux/runctypes"
 	"github.com/containerd/containerd/runtime/v2/runc/options"
+	digest "github.com/opencontainers/go-digest"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 )
@@ -39,6 +40,11 @@ var checkpointCommand = cli.Command{
 		cli.BoolFlag{
 			Name:  "track-mem",
 			Usage: "for tracking memory change",
+		},
+		cli.StringFlag{
+			Name:  "parent-checkpoint",
+			Value: "",
+			Usage: "set parent-checkpoint image's digest",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -69,6 +75,9 @@ var checkpointCommand = cli.Command{
 		}
 		if context.Bool("track-mem") {
 			opts = append(opts, withTrackMem(info.Runtime.Name))
+		}
+		if digest := context.String("parent-checkpoint"); digest != "" {
+			opts = append(opts, setParentCheckpoint(digest))
 		}
 
 		checkpoint, err := task.Checkpoint(ctx, opts...)
@@ -128,6 +137,14 @@ func withTrackMem(rt string) containerd.CheckpointTaskOpts {
 				opts.TrackMem = true
 			}
 		}
+		return nil
+	}
+}
+
+func setParentCheckpoint(checkpoint string) containerd.CheckpointTaskOpts {
+	digest := digest.Digest(checkpoint)
+	return func(r *containerd.CheckpointTaskInfo) error {
+		r.ParentCheckpoint = digest
 		return nil
 	}
 }
