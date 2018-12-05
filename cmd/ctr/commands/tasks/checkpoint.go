@@ -36,6 +36,10 @@ var checkpointCommand = cli.Command{
 			Name:  "exit",
 			Usage: "stop the container after the checkpoint",
 		},
+		cli.BoolFlag{
+			Name:  "track-mem",
+			Usage: "for tracking memory change",
+		},
 	},
 	Action: func(context *cli.Context) error {
 		id := context.Args().First()
@@ -63,6 +67,10 @@ var checkpointCommand = cli.Command{
 		if context.Bool("exit") {
 			opts = append(opts, withExit(info.Runtime.Name))
 		}
+		if context.Bool("track-mem") {
+			opts = append(opts, withTrackMem(info.Runtime.Name))
+		}
+
 		checkpoint, err := task.Checkpoint(ctx, opts...)
 		if err != nil {
 			return err
@@ -92,6 +100,32 @@ func withExit(rt string) containerd.CheckpointTaskOpts {
 			} else {
 				opts, _ := r.Options.(*runctypes.CheckpointOptions)
 				opts.Exit = true
+			}
+		}
+		return nil
+	}
+}
+
+func withTrackMem(rt string) containerd.CheckpointTaskOpts {
+	return func(r *containerd.CheckpointTaskInfo) error {
+		switch rt {
+		case "io.containerd.runc.v1":
+			if r.Options == nil {
+				r.Options = &options.CheckpointOptions{
+					TrackMem: true,
+				}
+			} else {
+				opts, _ := r.Options.(*options.CheckpointOptions)
+				opts.TrackMem = true
+			}
+		default:
+			if r.Options == nil {
+				r.Options = &runctypes.CheckpointOptions{
+					TrackMem: true,
+				}
+			} else {
+				opts, _ := r.Options.(*options.CheckpointOptions)
+				opts.TrackMem = true
 			}
 		}
 		return nil
